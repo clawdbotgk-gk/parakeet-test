@@ -247,12 +247,12 @@
             }
         }
 
-        async function toggleRecording() {
+        function toggleRecording() {
             const btn = document.getElementById('record-btn');
             if (btn.classList.contains('recording')) {
                 stopRecording();
             } else {
-                await startRecording();
+                startRecording();
             }
         }
 
@@ -262,10 +262,13 @@
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-                mediaRecorder.onstop = () => {
+                mediaRecorder.ondataavailable = function(e) {
+                    audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = function() {
                     recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    stream.getTracks().forEach(t => t.stop());
+                    stream.getTracks().forEach(function(t) { t.stop(); });
                     showPreview(recordedBlob);
                 };
                 
@@ -291,8 +294,10 @@
             const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
             const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
             const secs = String(elapsed % 60).padStart(2, '0');
-            document.getElementById('timer').textContent = `${mins}:${secs}`;
-            if (elapsed < 300) setTimeout(updateTimer, 1000);
+            document.getElementById('timer').textContent = mins + ':' + secs;
+            if (elapsed < 300) {
+                setTimeout(updateTimer, 1000);
+            }
         }
 
         function showPreview(blob) {
@@ -321,21 +326,14 @@
                 const response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, language: lang })
+                    body: JSON.stringify({ text: text, language: lang })
                 });
 
                 const data = await response.json();
 
                 if (data.audio) {
                     // We got actual audio!
-                    result.innerHTML = `
-                        <div class="audio-player">
-                            <h3>🔊 Generated Audio</h3>
-                            <audio controls autoplay>
-                                <source src="${data.audio}" type="audio/mp3">
-                            </audio>
-                        </div>
-                    `;
+                    result.innerHTML = '<div class="audio-player"><h3>🔊 Generated Audio</h3><audio controls autoplay><source src="' + data.audio + '" type="audio/mp3"></audio></div>';
                 } else if (data.browserspeech) {
                     // Fallback to browser speech
                     result.innerHTML = '<div class="audio-player"><p>🔊 Playing in browser...</p></div>';
@@ -344,7 +342,7 @@
                     utterance.lang = lang;
                     utterance.rate = 0.9;
                     
-                    utterance.onend = () => {
+                    utterance.onend = function() {
                         result.innerHTML = '<div class="audio-player"><p>✅ Playback complete!</p></div>';
                     };
                     
@@ -358,7 +356,7 @@
                 utterance.lang = lang;
                 utterance.rate = 0.9;
                 
-                utterance.onend = () => {
+                utterance.onend = function() {
                     result.innerHTML = '<div class="audio-player"><p>✅ Playback complete!</p></div>';
                 };
                 
