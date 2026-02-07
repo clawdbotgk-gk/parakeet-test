@@ -1,5 +1,4 @@
 {
-  "buildCommand": "echo 'Build complete'",
-  "outputDirectory": ".",
-  "framework": "static"
+  "buildCommand": "echo 'No build needed'",
+  "outputDirectory": "dist"
 }
