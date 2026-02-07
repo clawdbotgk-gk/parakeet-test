@@ -1,39 +1,28 @@
 # Nvidia Parakeet ASR API
 
-## Endpoint
+## Direct HuggingFace API (Recommended)
+
 ```
-POST https://parakeet-test-sandy.vercel.app/api/transcribe
+POST https://api-inference.huggingface.co/models/nvidia/parakeet-tdt-0.6b-v3
 ```
 
-## Request
+**Headers:**
 ```bash
-curl -X POST https://parakeet-test-sandy.vercel.app/api/transcribe \
-  -H "Content-Type: application/json" \
-  -d '{"audio": "<base64-encoded-audio>"}'
+Authorization: Bearer HF_TOKEN
+Content-Type: application/json
 ```
 
-## Audio Requirements
-- Format: WAV, OGG, MP3
-- Sample Rate: 16kHz
-- Channels: Mono
-- Encoding: 16-bit PCM recommended
-
-## Response
+**Body:**
 ```json
 {
-  "text": "Transcribed text here",
-  "confidence": 0.95,
-  "duration": 5.2
+  "inputs": "<base64-encoded-audio>"
 }
 ```
 
-## Direct HuggingFace API (No UI)
-
-If you want to call HuggingFace directly:
-
+## cURL Example
 ```bash
 curl -X POST "https://api-inference.huggingface.co/models/nvidia/parakeet-tdt-0.6b-v3" \
-  -H "Authorization: Bearer YOUR_HF_TOKEN" \
+  -H "Authorization: Bearer HF_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"inputs": "<base64-audio>"}'
 ```
@@ -43,45 +32,60 @@ curl -X POST "https://api-inference.huggingface.co/models/nvidia/parakeet-tdt-0.
 import requests
 import base64
 
-def transcribe(audio_path):
+def transcribe(audio_path, hf_token):
     with open(audio_path, "rb") as f:
         audio = base64.b64encode(f.read()).decode()
     
     response = requests.post(
-        "https://parakeet-test-sandy.vercel.app/api/transcribe",
-        json={"audio": audio}
+        "https://api-inference.huggingface.co/models/nvidia/parakeet-tdt-0.6b-v3",
+        headers={"Authorization": f"Bearer {hf_token}"},
+        json={"inputs": audio}
     )
     return response.json()
 
 # Usage
-result = transcribe("audio.wav")
+result = transcribe("audio.wav", "hf_xxxxxxxxxxxx")
 print(result["text"])
 ```
 
-## JavaScript Example
+## Node.js Example
 ```javascript
-async function transcribe(audioPath) {
-  const audio = await fetch(audioPath)
-    .then(r => r.arrayBuffer())
-    .then(buf => Buffer.from(buf).toString('base64'));
+const fs = require('fs');
+const fetch = require('node-fetch');
 
-  const res = await fetch('https://parakeet-test-sandy.vercel.app/api/transcribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ audio })
-  });
-  
-  return await res.json();
+async function transcribe(audioPath, hfToken) {
+    const audio = fs.readFileSync(audioPath).toString('base64');
+    
+    const res = await fetch(
+        "https://api-inference.huggingface.co/models/nvidia/parakeet-tdt-0.6b-v3",
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${hfToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ inputs: audio })
+        }
+    );
+    
+    return await res.json();
 }
 
 // Usage
-transcribe('audio.wav').then(console.log);
+transcribe("audio.wav", "hf_xxxxxxxxxxxx").then(console.log);
 ```
 
-## Supported Languages (25+)
-English, Spanish, French, German, Italian, Portuguese, Dutch, Russian, Ukrainian, Polish, Czech, Romanian, Greek, Hungarian, Swedish, Danish, Finnish, Bulgarian, Slovak, Slovenian, Croatian, Estonian, Latvian, Lithuanian, Maltese
+## Audio Requirements
+- Format: WAV, OGG, MP3
+- Sample Rate: 16kHz
+- Channels: Mono
+- Encoding: 16-bit PCM
 
-## Notes
-- First request may be slow (model loading)
-- Free tier has rate limits
-- For production, add your own HF_TOKEN in Vercel settings
+## Model Info
+- **Name:** nvidia/parakeet-tdt-0.6b-v3
+- **Languages:** 25+ European languages
+- **License:** CC-BY-4.0 (free for commercial use)
+- **Leaderboard:** Top of HuggingFace OpenASR Leaderboard
+
+## Get Your Token
+https://huggingface.co/settings/tokens
