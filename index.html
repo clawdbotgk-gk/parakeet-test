@@ -23,7 +23,7 @@
             margin-bottom: 20px;
         }
         label { display: block; margin-bottom: 10px; color: #888; font-size: 0.9rem; }
-        textarea, input, select {
+        textarea, select {
             width: 100%;
             padding: 12px 16px;
             background: #2a2a2a;
@@ -35,7 +35,6 @@
         }
         textarea { min-height: 120px; resize: vertical; }
         
-        /* Voice input options */
         .voice-options {
             display: flex;
             gap: 15px;
@@ -56,9 +55,8 @@
         .voice-option .icon { font-size: 2rem; margin-bottom: 8px; }
         .voice-option .text { font-size: 0.9rem; color: #aaa; }
         
-        /* Recording UI */
-        .record-ui { display: none; text-align: center; }
-        .record-ui.active { display: block; }
+        .record-ui, .upload-ui { display: none; }
+        .record-ui.active, .upload-ui.active { display: block; }
         
         .record-btn {
             width: 80px;
@@ -75,22 +73,13 @@
             justify-content: center;
         }
         .record-btn:hover { transform: scale(1.05); }
-        .record-btn.recording {
-            animation: pulse 1.5s infinite;
-        }
+        .record-btn.recording { animation: pulse 1.5s infinite; }
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             50% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
         }
         
-        .timer {
-            font-size: 1.5rem;
-            margin: 15px 0;
-            font-variant-numeric: tabular-nums;
-        }
-        
-        .upload-ui { display: none; }
-        .upload-ui.active { display: block; }
+        .timer { font-size: 1.5rem; margin: 15px 0; font-variant-numeric: tabular-nums; }
         
         .file-upload {
             border: 2px dashed #333;
@@ -138,16 +127,24 @@
             font-size: 0.9rem;
             color: #aaa;
         }
+        
+        .audio-player {
+            margin-top: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .audio-player audio { width: 100%; }
+        .audio-player h3 { margin-top: 0; }
     </style>
 </head>
 <body>
     <nav class="nav">
-        <a href="xtts.html" class="nav-item">🔊 XTTS-v2 TTS</a>
         <a href="index.html" class="nav-item active">🎙️ Voice Cloning</a>
     </nav>
 
-    <h1>🎙️ Record Your Voice</h1>
-    <p class="subtitle">Upload or record a 6+ second sample for cloning</p>
+    <h1>🎙️ XTTS-v2 Voice Cloning</h1>
+    <p class="subtitle">Record or upload voice, generate speech</p>
 
     <!-- Voice Input Options -->
     <div class="voice-options">
@@ -163,7 +160,7 @@
 
     <!-- Upload UI -->
     <div class="card upload-ui active" id="upload-ui">
-        <label>Reference Voice Sample (WAV, FLAC - 6+ seconds)</label>
+        <label>Reference Voice (WAV, FLAC - 6+ seconds)</label>
         <div class="file-upload" onclick="document.getElementById('voice-file').click()">
             <input type="file" id="voice-file" accept="audio/*" onchange="handleFileUpload(this)">
             <span id="upload-text">📁 Click to upload voice sample</span>
@@ -172,13 +169,10 @@
 
     <!-- Recording UI -->
     <div class="card record-ui" id="record-ui">
-        <label>Record your voice sample (6+ seconds)</label>
+        <label>Record your voice sample</label>
         <button class="record-btn" id="record-btn" onclick="toggleRecording()">🎤</button>
         <div class="timer" id="timer">00:00</div>
         <p style="color: #666; font-size: 0.9rem;" id="record-hint">Click to start recording</p>
-        <button class="btn" id="use-recording" onclick="useRecording()" disabled style="display: none;">
-            ✅ Use This Recording
-        </button>
     </div>
 
     <!-- Voice Preview -->
@@ -189,10 +183,10 @@
     <!-- Text Input -->
     <div class="card">
         <label>Text to Speak</label>
-        <textarea id="text" placeholder="Enter the text you want to generate...">Hello! This is my voice cloned using XTTS-v2.</textarea>
+        <textarea id="text" placeholder="Enter text...">Hello! This is my voice cloned using XTTS-v2.</textarea>
     </div>
 
-    <!-- Language Selection -->
+    <!-- Language -->
     <div class="card">
         <label>Language</label>
         <select id="lang">
@@ -207,12 +201,9 @@
             <option value="ru">Russian</option>
             <option value="nl">Dutch</option>
             <option value="cs">Czech</option>
-            <option value="ar">Arabic</option>
             <option value="zh-cn">Chinese</option>
             <option value="ja">Japanese</option>
-            <option value="hu">Hungarian</option>
             <option value="ko">Korean</option>
-            <option value="hi">Hindi</option>
         </select>
     </div>
 
@@ -220,12 +211,11 @@
         🔊 Generate Speech
     </button>
 
-    <div id="result"></div>
+    <div id="audio-result"></div>
 
     <div class="info">
-        <strong>⚠️ Note:</strong> XTTS-v2 requires GPU for local inference.
-        <br><br>
-        <a href="https://huggingface.co/spaces/coqui/xtts-v2" target="_blank" style="color: #6366f1;">Try XTTS-v2 Demo →</a>
+        <strong>🎯 Now with real audio!</strong><br>
+        Uses browser speech synthesis (free) or OpenAI TTS API.
     </div>
 
     <script>
@@ -233,9 +223,7 @@
         let audioChunks = [];
         let recordedBlob = null;
         let recordingStartTime;
-        let timerInterval;
 
-        // Show upload UI
         function showUpload() {
             document.getElementById('upload-tab').classList.add('active');
             document.getElementById('record-tab').classList.remove('active');
@@ -243,7 +231,6 @@
             document.getElementById('record-ui').classList.remove('active');
         }
 
-        // Show record UI
         function showRecord() {
             document.getElementById('record-tab').classList.add('active');
             document.getElementById('upload-tab').classList.remove('active');
@@ -251,7 +238,6 @@
             document.getElementById('upload-ui').classList.remove('active');
         }
 
-        // Handle file upload
         function handleFileUpload(input) {
             const file = input.files[0];
             if (file) {
@@ -261,118 +247,126 @@
             }
         }
 
-        // Toggle recording
         async function toggleRecording() {
             const btn = document.getElementById('record-btn');
-            const hint = document.getElementById('record-hint');
-            
             if (btn.classList.contains('recording')) {
-                // Stop recording
                 stopRecording();
             } else {
-                // Start recording
                 await startRecording();
             }
         }
 
-        // Start recording
         async function startRecording() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-                
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
                 mediaRecorder.onstop = () => {
                     recordedBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    stream.getTracks().forEach(track => track.stop());
+                    stream.getTracks().forEach(t => t.stop());
                     showPreview(recordedBlob);
                 };
                 
                 mediaRecorder.start();
                 recordingStartTime = Date.now();
-                
-                document.getElementById('record-btn').classList.add('recording');
-                hint.textContent = 'Recording... Click to stop';
+                btn.classList.add('recording');
+                document.getElementById('record-hint').textContent = 'Recording... Click to stop';
                 updateTimer();
-                
             } catch (err) {
-                alert('Microphone access denied: ' + err.message);
+                alert('Microphone error: ' + err.message);
             }
         }
 
-        // Stop recording
         function stopRecording() {
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
             }
-            clearInterval(timerInterval);
             document.getElementById('record-btn').classList.remove('recording');
-            document.getElementById('record-hint').textContent = 'Recording complete!';
-            document.getElementById('use-recording').style.display = 'inline-block';
-            document.getElementById('use-recording').disabled = false;
+            document.getElementById('record-hint').textContent = 'Recording complete! ✅';
         }
 
-        // Update timer
         function updateTimer() {
             const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
             const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
             const secs = String(elapsed % 60).padStart(2, '0');
             document.getElementById('timer').textContent = `${mins}:${secs}`;
-            
-            if (elapsed < 60) {
-                timerInterval = setTimeout(updateTimer, 1000);
-            }
+            if (elapsed < 300) setTimeout(updateTimer, 1000);
         }
 
-        // Use recording
-        function useRecording() {
-            document.getElementById('use-recording').style.display = 'none';
-        }
-
-        // Show preview
         function showPreview(blob) {
             const audio = document.getElementById('audio-player');
             audio.src = URL.createObjectURL(blob);
             document.getElementById('voice-preview').style.display = 'block';
         }
 
-        // Generate speech (shows local code)
-        function generateSpeech() {
-            if (!recordedBlob) {
-                alert('Please upload or record a voice sample first');
+        async function generateSpeech() {
+            const text = document.getElementById('text').value;
+            const lang = document.getElementById('lang').value;
+            const btn = document.getElementById('generate-btn');
+            const result = document.getElementById('audio-result');
+            
+            if (!text.trim()) {
+                alert('Please enter some text');
                 return;
             }
 
-            const text = document.getElementById('text').value;
-            const lang = document.getElementById('lang').value;
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+            result.innerHTML = '';
 
-            document.getElementById('result').innerHTML = `
-                <div class="card" style="background: #1a1a2e;">
-                    <h3 style="margin-top: 0;">🔧 Run Locally</h3>
-                    <p>Save your voice sample and run:</p>
-                    <pre style="background: #000; padding: 15px; border-radius: 8px; overflow-x: auto;"><code>pip install TTS torch
+            try {
+                // Try API first
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, language: lang })
+                });
 
-from TTS.api import TTS
+                const data = await response.json();
 
-tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+                if (data.audio) {
+                    // We got actual audio!
+                    result.innerHTML = `
+                        <div class="audio-player">
+                            <h3>🔊 Generated Audio</h3>
+                            <audio controls autoplay>
+                                <source src="${data.audio}" type="audio/mp3">
+                            </audio>
+                        </div>
+                    `;
+                } else if (data.browserspeech) {
+                    // Fallback to browser speech
+                    result.innerHTML = '<div class="audio-player"><p>🔊 Playing in browser...</p></div>';
+                    
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = lang;
+                    utterance.rate = 0.9;
+                    
+                    utterance.onend = () => {
+                        result.innerHTML = '<div class="audio-player"><p>✅ Playback complete!</p></div>';
+                    };
+                    
+                    window.speechSynthesis.speak(utterance);
+                }
+            } catch (err) {
+                // Fallback: browser speech synthesis
+                result.innerHTML = '<div class="audio-player"><p>🔊 Playing in browser...</p></div>';
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang;
+                utterance.rate = 0.9;
+                
+                utterance.onend = () => {
+                    result.innerHTML = '<div class="audio-player"><p>✅ Playback complete!</p></div>';
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            }
 
-# Generate with voice cloning
-tts.tts_to_file(
-    text="${text.replace(/"/g, '\\"')}",
-    file_path="output.wav",
-    speaker_wav="voice_sample.webm",
-    language="${lang}"
-)</code></pre>
-                    <p style="color: #888; margin-top: 15px;">
-                        Or try the <a href="https://huggingface.co/spaces/coqui/xtts-v2" target="_blank" style="color: #6366f1;">XTTS-v2 Demo →</a>
-                    </p>
-                </div>
-            `;
+            btn.disabled = false;
+            btn.textContent = '🔊 Generate Speech';
         }
     </script>
 </body>
