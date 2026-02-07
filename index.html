@@ -219,10 +219,10 @@
     </div>
 
     <script>
-        let mediaRecorder;
-        let audioChunks = [];
-        let recordedBlob = null;
-        let recordingStartTime;
+        var mediaRecorder;
+        var audioChunks = [];
+        var recordedBlob = null;
+        var recordingStartTime;
 
         function showUpload() {
             document.getElementById('upload-tab').classList.add('active');
@@ -239,7 +239,7 @@
         }
 
         function handleFileUpload(input) {
-            const file = input.files[0];
+            var file = input.files[0];
             if (file) {
                 document.getElementById('upload-text').textContent = '✅ ' + file.name;
                 recordedBlob = file;
@@ -248,17 +248,17 @@
         }
 
         function toggleRecording() {
-            const btn = document.getElementById('record-btn');
+            var btn = document.getElementById('record-btn');
             if (btn.classList.contains('recording')) {
                 stopRecording();
             } else {
-                startRecording();
+                startRecording(btn);
             }
         }
 
-        async function startRecording() {
+        async function startRecording(btn) {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
                 audioChunks = [];
                 
@@ -291,9 +291,9 @@
         }
 
         function updateTimer() {
-            const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-            const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
-            const secs = String(elapsed % 60).padStart(2, '0');
+            var elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+            var mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            var secs = String(elapsed % 60).padStart(2, '0');
             document.getElementById('timer').textContent = mins + ':' + secs;
             if (elapsed < 300) {
                 setTimeout(updateTimer, 1000);
@@ -301,16 +301,16 @@
         }
 
         function showPreview(blob) {
-            const audio = document.getElementById('audio-player');
+            var audio = document.getElementById('audio-player');
             audio.src = URL.createObjectURL(blob);
             document.getElementById('voice-preview').style.display = 'block';
         }
 
         async function generateSpeech() {
-            const text = document.getElementById('text').value;
-            const lang = document.getElementById('lang').value;
-            const btn = document.getElementById('generate-btn');
-            const result = document.getElementById('audio-result');
+            var text = document.getElementById('text').value;
+            var lang = document.getElementById('lang').value;
+            var btn = document.getElementById('generate-btn');
+            var result = document.getElementById('audio-result');
             
             if (!text.trim()) {
                 alert('Please enter some text');
@@ -323,22 +323,20 @@
 
             try {
                 // Try API first
-                const response = await fetch('/api/tts', {
+                var response = await fetch('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text, language: lang })
                 });
 
-                const data = await response.json();
+                var data = await response.json();
 
                 if (data.audio) {
-                    // We got actual audio!
                     result.innerHTML = '<div class="audio-player"><h3>🔊 Generated Audio</h3><audio controls autoplay><source src="' + data.audio + '" type="audio/mp3"></audio></div>';
                 } else if (data.browserspeech) {
-                    // Fallback to browser speech
                     result.innerHTML = '<div class="audio-player"><p>🔊 Playing in browser...</p></div>';
                     
-                    const utterance = new SpeechSynthesisUtterance(text);
+                    var utterance = new SpeechSynthesisUtterance(text);
                     utterance.lang = lang;
                     utterance.rate = 0.9;
                     
@@ -349,10 +347,9 @@
                     window.speechSynthesis.speak(utterance);
                 }
             } catch (err) {
-                // Fallback: browser speech synthesis
                 result.innerHTML = '<div class="audio-player"><p>🔊 Playing in browser...</p></div>';
                 
-                const utterance = new SpeechSynthesisUtterance(text);
+                var utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = lang;
                 utterance.rate = 0.9;
                 
