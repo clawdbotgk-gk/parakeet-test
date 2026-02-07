@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XTTS-v2 Voice Cloning</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #0d0d0d;
+            color: #fff;
+        }
+        h1 { font-size: 2rem; margin-bottom: 10px; }
+        .subtitle { color: #888; margin-bottom: 40px; }
+        .card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        label { display: block; margin-bottom: 8px; color: #888; font-size: 0.9rem; }
+        textarea, input, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        textarea { min-height: 120px; resize: vertical; }
+        .file-upload {
+            border: 2px dashed #333;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .file-upload:hover { border-color: #666; }
+        .file-upload input { display: none; }
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #audio-preview { margin-top: 20px; display: none; }
+        #audio-preview audio { width: 100%; }
+        .nav { margin-bottom: 40px; }
+        .nav a {
+            color: #888;
+            text-decoration: none;
+            margin-right: 20px;
+        }
+        .nav a:hover, .nav a.active { color: #fff; }
+        .info {
+            background: #1a1a2e;
+            border-left: 3px solid #6366f1;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="index.html">🎙️ Parakeet ASR</a>
+        <a href="xtts.html" class="active">🔊 XTTS-v2 TTS</a>
+    </nav>
+
+    <h1>🔊 XTTS-v2 Voice Cloning</h1>
+    <p class="subtitle">Text-to-Speech with voice cloning (17 languages)</p>
+
+    <div class="card">
+        <label>Reference Voice (6+ seconds, WAV/FLAC)</label>
+        <div class="file-upload" onclick="document.getElementById('voice').click()">
+            <input type="file" id="voice" accept="audio/*" onchange="handleVoiceUpload(this)">
+            <span id="voice-name">📁 Click to upload voice sample</span>
+        </div>
+        <div id="audio-preview">
+            <audio id="voice-preview" controls></audio>
+        </div>
+    </div>
+
+    <div class="card">
+        <label>Text to Speak</label>
+        <textarea id="text" placeholder="Enter the text you want to generate...">Hello! This is my voice cloned using XTTS-v2.</textarea>
+    </div>
+
+    <div class="card">
+        <label>Language</label>
+        <select id="lang">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="pl">Polish</option>
+            <option value="tr">Turkish</option>
+            <option value="ru">Russian</option>
+            <option value="nl">Dutch</option>
+            <option value="cs">Czech</option>
+            <option value="ar">Arabic</option>
+            <option value="zh-cn">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="hu">Hungarian</option>
+            <option value="ko">Korean</option>
+            <option value="hi">Hindi</option>
+        </select>
+    </div>
+
+    <button class="btn" onclick="generateSpeech()" id="generate-btn">
+        🔊 Generate Speech
+    </button>
+
+    <div id="result"></div>
+
+    <div class="info">
+        <strong>⚠️ Note:</strong> XTTS-v2 requires GPU. Use locally or via API.
+        <br><br>
+        <a href="https://huggingface.co/spaces/coqui/xtts-v2" target="_blank" style="color: #6366f1;">Try XTTS-v2 Demo →</a>
+    </div>
+
+    <script>
+        function handleVoiceUpload(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('voice-name').textContent = '✅ ' + file.name;
+                const audio = document.getElementById('voice-preview');
+                audio.src = URL.createObjectURL(file);
+                audio.style.display = 'block';
+            }
+        }
+
+        async function generateSpeech() {
+            const btn = document.getElementById('generate-btn');
+            const result = document.getElementById('result');
+            const text = document.getElementById('text').value;
+            const lang = document.getElementById('lang').value;
+
+            if (!document.getElementById('voice').files[0]) {
+                alert('Please upload a reference voice sample');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Generating...';
+            result.innerHTML = '';
+
+            try {
+                // This would need a backend API for actual TTS
+                // For now, show the code to run locally
+                result.innerHTML = `
+                    <div class="card" style="background: #1a1a2e;">
+                        <h3 style="margin-top: 0;">🔧 Run Locally</h3>
+                        <p>XTTS-v2 requires GPU. Run this locally:</p>
+                        <pre style="background: #000; padding: 15px; border-radius: 8px; overflow-x: auto;"><code>pip install TTS torch
+
+from TTS.api import TTS
+
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+
+# Generate with voice cloning
+tts.tts_to_file(
+    text="${text.replace(/"/g, '\\"')}",
+    file_path="output.wav",
+    speaker_wav="reference_voice.wav",
+    language="${lang}"
+)</code></pre>
+                        <p style="color: #888; margin-top: 15px;">
+                            Or try the <a href="https://huggingface.co/spaces/coqui/xtts-v2" target="_blank" style="color: #6366f1;">XTTS-v2 Demo →</a>
+                        </p>
+                    </div>
+                `;
+            } catch (err) {
+                result.innerHTML = `<div class="card" style="background: #2a1a1a; color: #ff6b6b;">Error: ${err.message}</div>`;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔊 Generate Speech';
+        }
+    </script>
+</body>
+</html>
