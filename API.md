@@ -89,3 +89,47 @@ transcribe("audio.wav", "hf_xxxxxxxxxxxx").then(console.log);
 
 ## Get Your Token
 https://huggingface.co/settings/tokens
+
+---
+
+# XTTS-v2 Text-to-Speech API
+
+Add voice synthesis to your app!
+
+## Using TTS Library (Recommended)
+
+```bash
+pip install TTS
+```
+
+## Python Example
+```python
+from TTS.api import TTS
+
+# Initialize (uses GPU if available)
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=True)
+
+# Generate speech with voice cloning
+tts.tts_to_file(
+    text="Hello! This is my voice cloned.",
+    file_path="output.wav",
+    speaker_wav="reference_audio.wav",  # 6+ second sample of target voice
+    language="en"
+)
+```
+
+## Requirements
+- Python 3.8+
+- PyTorch
+- 2GB+ GPU VRAM (or run on CPU)
+- 6+ second reference audio for voice cloning
+
+## Supported Languages (17)
+en, es, fr, de, it, pt, pl, tr, ru, nl, cs, ar, zh-cn, ja, hu, ko, hi
+
+## Free API Alternative
+https://huggingface.co/spaces/coqui/xtts-v2
+
+## Resources
+- Docs: https://tts.readthedocs.io
+- GitHub: https://github.com/coqui-ai/TTS
