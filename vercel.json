@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npx vercel-build",
+  "framework": null,
+  "functions": {
+    "api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
