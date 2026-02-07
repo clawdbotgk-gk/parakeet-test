@@ -110,7 +110,8 @@ async function startRecording() {
       audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
       stream.getTracks().forEach(track => track.stop());
       updateFileInfo(audioBlob, 'recording.wav');
-      enableTranscribeButton();
+      // Auto-transcribe when recording stops
+      autoTranscribeRecording();
     };
 
     mediaRecorder.start(100);
@@ -147,6 +148,15 @@ function stopRecording() {
   clearInterval(timerInterval);
   recordingTimer.querySelectorAll('.timer-digit')[0].textContent = '0';
   recordingTimer.querySelectorAll('.timer-digit')[1].textContent = '00';
+}
+
+function autoTranscribeRecording() {
+  // Hide other sections and show processing state
+  hideAllSections();
+  showProcessingState();
+  
+  // Automatically start transcription
+  transcribeAudio();
 }
 
 function updateTimer() {
@@ -270,8 +280,14 @@ async function transcribeAudio() {
     currentTranscription = result.text || 'No transcription available';
     showResult(currentTranscription);
 
+    // Reset record status after successful transcription
+    recordStatus.textContent = 'Tap to record';
+
   } catch (error) {
     console.error('Transcription error:', error);
+    
+    // Reset status on error
+    recordStatus.textContent = 'Tap to record';
     
     // For demo, show sample result if API fails
     if (error.message.includes('Authorization')) {
@@ -323,6 +339,12 @@ function showLoading() {
   loadingState.classList.remove('hidden');
 }
 
+function showProcessingState() {
+  // Update status to show processing
+  recordStatus.textContent = 'Processing...';
+  loadingState.classList.remove('hidden');
+}
+
 function showResult(text) {
   transcriptionResult.innerHTML = `<p>${escapeHtml(text)}</p>`;
   resultSection.classList.remove('hidden');
@@ -355,6 +377,7 @@ function resetToInitial() {
   hideAllSections();
   audioBlob = null;
   currentTranscription = '';
+  recordStatus.textContent = 'Tap to record';
   removeAudioFile({ stopPropagation: () => {} });
   recordBtn.focus();
 }
